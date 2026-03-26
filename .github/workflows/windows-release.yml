@@ -8,6 +8,7 @@ permissions:
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  BONJOUR_SDK_HOME: C:\Program Files\Bonjour SDK
 
 jobs:
   build-windows:
@@ -36,7 +37,25 @@ jobs:
             mingw-w64-ucrt-x86_64-openssl
             mingw-w64-ucrt-x86_64-python
             mingw-w64-ucrt-x86_64-ninja
+            mingw-w64-ucrt-x86_64-p7zip
             zip
+
+      - name: Install Bonjour SDK
+        shell: pwsh
+        run: |
+          $downloadUrl = 'https://www.softpedia.com/dyn-postdownload.php/c8ccb50199ff3018c7297e83a3afe354/69c57e91/26eb5/4/1'
+          $installer = Join-Path $env:RUNNER_TEMP 'bonjoursdksetup.exe'
+          $extractDir = Join-Path $env:RUNNER_TEMP 'bonjour-sdk'
+
+          Invoke-WebRequest -Uri $downloadUrl -OutFile $installer
+          New-Item -ItemType Directory -Force -Path $extractDir | Out-Null
+          & 7z x $installer "-o$extractDir" | Out-Host
+
+          $bonjourMsi = Join-Path $extractDir 'Bonjour64.msi'
+          $bonjourSdkMsi = Join-Path $extractDir 'BonjourSDK64.msi'
+
+          Start-Process msiexec -ArgumentList "/i `"$bonjourMsi`" /qn /L*v `"$env:RUNNER_TEMP\bonjour64.log`"" -NoNewWindow -Wait
+          Start-Process msiexec -ArgumentList "/i `"$bonjourSdkMsi`" /qn /L*v `"$env:RUNNER_TEMP\bonjoursdk64.log`"" -NoNewWindow -Wait
 
       - name: Configure
         run: |
