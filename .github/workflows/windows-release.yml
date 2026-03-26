@@ -2,6 +2,11 @@ name: Windows Release Build
 
 on:
   workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Release tag to create or update
+        required: true
+        type: string
 
 permissions:
   contents: write
@@ -74,9 +79,20 @@ jobs:
 
       - name: Create release archive
         run: |
-          zip -r "uxplay-windows-${{ github.event.release.tag_name }}.zip" dist
+          zip -r "uxplay-windows-${{ inputs.release_tag }}.zip" dist
+
+      - name: Create release tag
+        run: |
+          if git ls-remote --tags origin "refs/tags/${{ inputs.release_tag }}" | grep -q .; then
+            echo "Tag ${{ inputs.release_tag }} already exists on origin"
+          else
+            git tag "${{ inputs.release_tag }}"
+            git push origin "refs/tags/${{ inputs.release_tag }}"
+          fi
 
       - name: Upload archive to release
         uses: softprops/action-gh-release@v2
         with:
-          files: uxplay-windows-${{ github.event.release.tag_name }}.zip
+          tag_name: ${{ inputs.release_tag }}
+          name: ${{ inputs.release_tag }}
+          files: uxplay-windows-${{ inputs.release_tag }}.zip
