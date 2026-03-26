@@ -1,0 +1,62 @@
+name: Windows Release Build
+
+on:
+  release:
+    types:
+      - published
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+
+    defaults:
+      run:
+        shell: msys2 {0}
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Set up MSYS2
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: UCRT64
+          update: true
+          install: >-
+            mingw-w64-ucrt-x86_64-cmake
+            mingw-w64-ucrt-x86_64-gcc
+            mingw-w64-ucrt-x86_64-pkgconf
+            mingw-w64-ucrt-x86_64-libplist
+            mingw-w64-ucrt-x86_64-gstreamer
+            mingw-w64-ucrt-x86_64-gst-plugins-base
+            mingw-w64-ucrt-x86_64-openssl
+            mingw-w64-ucrt-x86_64-python
+            zip
+
+      - name: Configure
+        run: |
+          cmake -S . -B build -G "MinGW Makefiles" \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_INSTALL_PREFIX=/ucrt64
+
+      - name: Build
+        run: cmake --build build --config Release --parallel
+
+      - name: Stage release files
+        run: |
+          mkdir -p dist
+          cp build/uxplay.exe dist/
+          cp README.md README.txt README.html LICENSE dist/
+          cp uxplay.1 dist/ || true
+
+      - name: Create release archive
+        run: |
+          zip -r "uxplay-windows-${{ github.event.release.tag_name }}.zip" dist
+
+      - name: Upload archive to release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: uxplay-windows-${{ github.event.release.tag_name }}.zip
