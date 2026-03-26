@@ -1,9 +1,6 @@
 name: Windows Release Build
 
 on:
-  release:
-    types:
-      - published
   workflow_dispatch:
 
 permissions:
