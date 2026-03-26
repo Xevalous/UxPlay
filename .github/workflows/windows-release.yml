@@ -37,7 +37,7 @@ jobs:
             mingw-w64-ucrt-x86_64-openssl
             mingw-w64-ucrt-x86_64-python
             mingw-w64-ucrt-x86_64-ninja
-            mingw-w64-ucrt-x86_64-p7zip
+            p7zip
             zip
 
       - name: Install Bonjour SDK
